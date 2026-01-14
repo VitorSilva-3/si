@@ -140,4 +140,99 @@ class DenseLayer(Layer):
         tuple
             The shape of the output of the layer.
         """
-        return (self.n_units,) 
+        return (self.n_units,)
+    
+class Dropout(Layer):
+    """
+    The Dropout layer is a regularization technique that helps reduce overfitting 
+    by randomly setting a fraction of the input units to zero during training.
+    """
+
+    def __init__(self, probability: float):
+        """
+        Initialize the Dropout layer with a specified dropout rate.
+
+        Parameters
+        ----------
+        probability : float
+            Probability of dropping out input units. Must be between 0 and 1.
+        """
+        super().__init__()
+        if not (0 <= probability <= 1):
+            raise ValueError("Probability must be between 0 and 1.")
+        
+        self.probability = probability
+        self.mask = None
+        self.input = None
+        self.output = None
+
+    def forward_propagation(self, input: np.ndarray, training: bool) -> np.ndarray:
+        """
+        Apply the dropout operation during forward propagation.
+
+        Parameters
+        ----------
+        input : np.ndarray
+            Input data for the layer.
+        training : bool
+            Whether the layer is in training mode.
+
+        Returns
+        -------
+        np.ndarray
+            The output after applying dropout in training mode, or the input unchanged in inference mode.
+        """
+        self.input = input
+
+        if training:
+            # Compute scaling factor (Inverted Dropout)
+            scaling_factor = 1 / (1 - self.probability)
+            
+            # Compute mask (1 = keep, 0 = drop)
+            self.mask = np.random.binomial(1, 1 - self.probability, size=input.shape) * scaling_factor
+            
+            # Apply mask
+            self.output = input * self.mask
+            return self.output
+
+        # Inference mode: pass through
+        return input
+
+    def backward_propagation(self, output_error: np.ndarray) -> np.ndarray:
+        """
+        Compute the gradient for backpropagation.
+
+        Parameters
+        ----------
+        output_error : np.ndarray
+            Gradient of the loss with respect to the output.
+
+        Returns
+        -------
+        np.ndarray
+            Gradient of the loss with respect to the input.
+        """
+        # Multiply error by the mask
+        return output_error * self.mask
+
+    def output_shape(self) -> tuple:
+        """
+        Get the shape of the output.
+
+        Returns
+        -------
+        tuple
+            Shape of the input, since Dropout does not modify the data's shape.
+        """
+        return self.input.shape
+
+    def parameters(self) -> int:
+        """
+        Get the number of trainable parameters in the layer.
+
+        Returns
+        -------
+        int
+            Zero, as Dropout has no trainable parameters.
+        """
+        return 0
