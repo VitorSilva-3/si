@@ -177,3 +177,92 @@ class ReLUActivation(ActivationLayer):
             The derivative of the activation function.
         """
         return np.where(input >= 0, 1, 0)
+
+
+class TanhActivation(ActivationLayer):
+    """
+    Tanh activation function.
+    Squashes values to the range [-1, 1].
+    """
+
+    def activation_function(self, input: np.ndarray) -> np.ndarray:
+        """
+        Tanh activation function.
+        Formula: (e^x - e^-x) / (e^x + e^-x)
+
+        Parameters
+        ----------
+        input: numpy.ndarray
+            The input to the layer.
+
+        Returns
+        -------
+        numpy.ndarray
+            The output of the layer.
+        """
+        return (np.exp(input) - np.exp(-input)) / (np.exp(input) + np.exp(-input))
+
+    def derivative(self, input: np.ndarray) -> np.ndarray:
+        """
+        Derivative of the Tanh activation function.
+        Formula: 1 - tanh(x)^2
+
+        Parameters
+        ----------
+        input: numpy.ndarray
+            The input to the layer.
+
+        Returns
+        -------
+        numpy.ndarray
+            The derivative of the activation function.
+        """
+        return 1 - (self.activation_function(input) ** 2)
+
+
+class SoftmaxActivation(ActivationLayer):
+    """
+    Softmax activation function.
+    Transforms raw output scores into a probability distribution.
+    """
+
+    def activation_function(self, input: np.ndarray) -> np.ndarray:
+        """
+        Softmax activation function.
+        Formula: e^x_i / sum(e^x_j)
+
+        Includes numerical stability strategy by subtracting the max value 
+        from the input before exponentiation.
+
+        Parameters
+        ----------
+        input: numpy.ndarray
+            The input to the layer.
+
+        Returns
+        -------
+        numpy.ndarray
+            The output of the layer (probabilities).
+        """
+        # Numerical Stability: Subtract max value from each row
+        exp_values = np.exp(input - np.max(input, axis=1, keepdims=True))
+        
+        # Divide by the sum of exponentials
+        return exp_values / np.sum(exp_values, axis=1, keepdims=True)
+
+    def derivative(self, input: np.ndarray) -> np.ndarray:
+        """
+        Derivative of the Softmax activation function.
+        Formula (simplified element-wise): f(x) * (1 - f(x))
+
+        Parameters
+        ----------
+        input: numpy.ndarray
+            The input to the layer.
+
+        Returns
+        -------
+        numpy.ndarray
+            The derivative of the activation function.
+        """
+        return self.activation_function(input) * (1 - self.activation_function(input))
