@@ -1,10 +1,11 @@
 import os
+import numpy as np
 from unittest import TestCase
 from si.io.data_file import read_data_file
 from si.model_selection.split import train_test_split
 from si.models.decision_tree_classifier import DecisionTreeClassifier
 from datasets import DATASETS_PATH
-from si.neural_networks.losses import BinaryCrossEntropy, MeanSquaredError
+from si.neural_networks.losses import BinaryCrossEntropy, MeanSquaredError, CategoricalCrossEntropy
 
 
 class TestLosses(TestCase):
@@ -40,3 +41,27 @@ class TestLosses(TestCase):
         derivative_error = BinaryCrossEntropy().derivative(self.dataset.y, self.dataset.y)
 
         self.assertEqual(derivative_error.shape[0], self.dataset.shape()[0])
+
+    def test_categorical_cross_entropy_loss(self):
+        y_dummy = np.array([
+            [1, 0, 0],
+            [0, 1, 0],
+            [0, 0, 1]
+        ])
+
+        # Test loss when predictions match true labels
+        error = CategoricalCrossEntropy().loss(y_dummy, y_dummy)
+
+        # Check if the loss is approximately 0
+        self.assertAlmostEqual(error, 0)
+
+    def test_categorical_cross_entropy_derivative(self):
+        y_dummy = np.array([
+            [1, 0, 0],
+            [0, 1, 0]
+        ])
+        
+        derivative_error = CategoricalCrossEntropy().derivative(y_dummy, y_dummy)
+
+        # Check shape
+        self.assertEqual(derivative_error.shape, y_dummy.shape)
